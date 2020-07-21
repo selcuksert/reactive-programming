@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta content="IE=Edge" http-equiv="X-UA-Compatible">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Real-Time BTC Price Trend</title>
+
+<link rel="stylesheet" type="text/css"
+	href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css">
+
+<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js"></script>
+<script type="text/javascript"
+	src="https://www.gstatic.com/charts/loader.js"></script>
+
+<script>
+	var ws = null;
+	var url = 'ws://' + window.location.hostname + ':' + window.location.port
+			+ '/ws/event-emitter';
+
+	var chartData = [];
+
+	function connect() {
+		ws = new WebSocket(url);
+		ws.onopen = function() {
+			setStatus('Online');
+			ws.send('Start');
+		};
+
+		ws.onmessage = function(event) {
+			update(event.data);
+		};
+
+		ws.onclose = function(event) {
+			chartData = [];
+		};
+	}
+
+	function setStatus(status) {
+		let statusElem = document.getElementById('status');
+		statusElem.style.color = 'white';
+		if(status === 'Online') {
+			statusElem.style.backgroundColor = '#21BA47';
+		}
+		else {
+			statusElem.style.backgroundColor = '#db2828';			
+		}
+		statusElem.innerText = status;
+	}
+
+	function disconnect() {
+		if (ws != null) {
+			setStatus('Offline');
+			ws.close();
+			ws = null;
+		}
+	}
+
+	function timeString(dateObj) {
+		let hours = dateObj.getHours();
+		let minutes = dateObj.getMinutes();
+		let seconds = dateObj.getSeconds();
+
+		let timeStr = hours.toString().padStart(2, '0') + ':'
+				+ minutes.toString().padStart(2, '0') + ':'
+				+ seconds.toString().padStart(2, '0');
+
+		return timeStr;
+	}
+
+	function update(message) {
+		let priceData = JSON.parse(message);
+		let dateObj = new Date(priceData.timestamp);
+		chartData.push([ timeString(dateObj),
+				Number.parseFloat(priceData.data.amount) ]);
+		drawPriceChart();
+	}
+
+	google.charts.load('current', {
+		packages : [ 'corechart', 'line' ]
+	});
+	google.charts.setOnLoadCallback(drawPriceChart);
+
+	function drawPriceChart() {
+
+		var data = new google.visualization.DataTable();
+		data.addColumn('string', 'Time');
+		data.addColumn('number', 'BTC');
+
+		data.addRows(chartData);
+
+		var options = {
+			hAxis : {
+				title : 'Time',
+				textPosition : 'out'
+			},
+			vAxis : {
+				format : '$#',
+				textPosition : 'out'
+			},
+			pointSize : 2,
+			dataOpacity : 0.6,
+			colors : [ '#15A0C8' ],
+		};
+
+		var chart = new google.visualization.AreaChart(document
+				.getElementById('chart_div'));
+
+		chart.draw(data, options);
+	}
+
+	$(window).resize(function() {
+		drawPriceChart();
+	});
+
+	$(document).ready(function() {
+		setStatus('Offline');
+	});
+</script>
+</head>
+<body>
+	<div class="ui three item attached stackable menu">
+		<a class="item" id="connect" onclick="connect();"> <i
+			class="play icon"></i> Start
+		</a> <span class="item" id="status"></span> <a class="item"
+			id="disconnect" onclick="disconnect();"> <i class="stop icon"></i>
+			Stop
+		</a>
+	</div>
+
+	<div class="ui container segments">
+		<div class="ui inverted teal segment">
+			<h2 class="ui huge header">
+				Price Trend
+				<div class="sub header">BTC USD</div>
+			</h2>
+		</div>
+		<div class="ui segment">
+			<div id="chart_div" style="width: 100%; height: 400px;"></div>
+		</div>
+	</div>
+
+</body>
+</html>

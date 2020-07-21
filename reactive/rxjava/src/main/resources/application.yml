@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: Crypto Currency Monitor (RxJava)
+debug: false
+logging:
+  level:
+    root: info
+server:
+  port: 8081
+custom.property:
+  proxy:
+    host: proxy.corp.com
+    port: 8080
+    enabled: false
+  coin.service.uri: https://api.coinbase.com/v2/prices/{currPair}/buy
+  crypto:
+    base.list: BTC,ETH,LTC
+    curr.list: USD,EUR
+  interval.msecs: 5000

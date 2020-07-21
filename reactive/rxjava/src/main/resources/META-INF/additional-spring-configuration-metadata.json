@@ -1,0 +1,37 @@
+{"properties": [
+  {
+    "name": "custom.property.proxy.host",
+    "type": "java.lang.String",
+    "description": "A description for 'custom.property.proxy.host'"
+  },
+  {
+    "name": "custom.property.proxy.port",
+    "type": "java.lang.String",
+    "description": "A description for 'custom.property.proxy.port'"
+  },
+  {
+    "name": "custom.property.proxy.enabled",
+    "type": "java.lang.String",
+    "description": "A description for 'custom.property.proxy.enabled'"
+  },
+  {
+    "name": "custom.property.crypto.base.list",
+    "type": "java.lang.String",
+    "description": "A description for 'custom.property.crypto.base.list'"
+  },
+  {
+    "name": "custom.property.crypto.curr.list",
+    "type": "java.lang.String",
+    "description": "A description for 'custom.property.crypto.curr.list'"
+  },
+  {
+    "name": "custom.property.coin.service.uri",
+    "type": "java.lang.String",
+    "description": "A description for 'custom.property.coin.service.uri'"
+  },
+  {
+    "name": "custom.property.interval.msecs",
+    "type": "java.lang.String",
+    "description": "A description for 'custom.property.interval.msecs'"
+  }
+]}
