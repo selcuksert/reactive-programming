@@ -9,8 +9,8 @@
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
 	<groupId>com.corp.concepts.reactive</groupId>
-	<artifactId>rxjava</artifactId>
-	<name>rxjava</name>
+	<artifactId>webflux</artifactId>
+	<name>webflux</name>
 	<description>Reactive programming with Spring WebFlux</description>
 
 	<dependencies>
