@@ -11,7 +11,7 @@
 	<groupId>com.corp.concepts.reactive</groupId>
 	<artifactId>rxjava</artifactId>
 	<name>rxjava</name>
-	<description>Reactive programming with RxJava</description>
+	<description>Reactive programming with Spring WebFlux</description>
 
 	<dependencies>
 		<dependency>

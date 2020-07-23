@@ -18,7 +18,7 @@
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 	<modules>
-		<module>rxjava</module>
+		<module>webflux</module>
 		<module>models</module>
 	</modules>
 
