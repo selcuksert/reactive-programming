@@ -1,4 +1,4 @@
-package com.corp.concepts.reactive.rxjava.service;
+package com.corp.concepts.reactive.webflux.service;
 
 import java.time.Duration;
 import java.util.Calendar;
@@ -25,6 +25,12 @@ public class CurrencyService {
 	@Value("${custom.property.interval.msecs}")
 	private int intervalInMsecs;
 
+	@Value("${custom.property.crypto.name}")
+	private String cryptoName;
+	
+	@Value("${custom.property.crypto.curr}")
+	private String cryptoCurr;
+
 	private WebClient webClient;
 	private ObjectMapper json;
 
@@ -34,7 +40,7 @@ public class CurrencyService {
 	}
 
 	public Flux<String> getCryptoPrice() {
-		Flux<CoinBaseResponse> eventFlux = webClient.get().uri(serviceUri, "BTC-USD").accept(MediaType.APPLICATION_JSON)
+		Flux<CoinBaseResponse> eventFlux = webClient.get().uri(serviceUri, cryptoName + "-" + cryptoCurr).accept(MediaType.APPLICATION_JSON)
 				.exchange().flatMap(response -> response.bodyToMono(CoinBaseResponse.class)).repeat();
 
 		Flux<String> intervalFlux = Flux.interval(Duration.ofMillis(intervalInMsecs)).zipWith(eventFlux,

@@ -1,12 +1,13 @@
-package com.corp.concepts.reactive.rxjava;
+package com.corp.concepts.reactive.akka;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class RxjavaApplication {
+public class AkkaApplication {
+
 	public static void main(String[] args) {
-		SpringApplication.run(RxjavaApplication.class, args);
+		SpringApplication.run(AkkaApplication.class, args);
 	}
 
 }

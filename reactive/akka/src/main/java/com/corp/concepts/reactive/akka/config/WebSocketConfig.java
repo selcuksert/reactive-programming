@@ -1,4 +1,4 @@
-package com.corp.concepts.reactive.rxjava.config;
+package com.corp.concepts.reactive.akka.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;

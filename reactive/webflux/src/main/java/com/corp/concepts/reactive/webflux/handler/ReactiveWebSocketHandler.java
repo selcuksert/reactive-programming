@@ -1,10 +1,10 @@
-package com.corp.concepts.reactive.rxjava.handler;
+package com.corp.concepts.reactive.webflux.handler;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.socket.WebSocketHandler;
 import org.springframework.web.reactive.socket.WebSocketSession;
 
-import com.corp.concepts.reactive.rxjava.service.CurrencyService;
+import com.corp.concepts.reactive.webflux.service.CurrencyService;
 
 import reactor.core.publisher.Mono;
 

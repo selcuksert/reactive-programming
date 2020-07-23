@@ -1,12 +1,12 @@
 spring:
   application:
-    name: Crypto Currency Monitor (Spring WebFlux)
+    name: Crypto Currency Monitor (Akka)
 debug: false
 logging:
   level:
     root: info
 server:
-  port: 8081
+  port: 8083
 custom.property:
   proxy:
     host: proxy.corp.com
@@ -17,5 +17,7 @@ custom.property:
     name: BTC
     curr: USD
   interval.msecs: 2000
-  socket:
-    addr: /ws/price
+  message:
+    stomp.endpoint: /price-websocket
+    topic: /topic/price
+    

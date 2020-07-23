@@ -15,16 +15,6 @@
     "description": "A description for 'custom.property.proxy.enabled'"
   },
   {
-    "name": "custom.property.crypto.base.list",
-    "type": "java.lang.String",
-    "description": "A description for 'custom.property.crypto.base.list'"
-  },
-  {
-    "name": "custom.property.crypto.curr.list",
-    "type": "java.lang.String",
-    "description": "A description for 'custom.property.crypto.curr.list'"
-  },
-  {
     "name": "custom.property.coin.service.uri",
     "type": "java.lang.String",
     "description": "A description for 'custom.property.coin.service.uri'"
@@ -33,5 +23,20 @@
     "name": "custom.property.interval.msecs",
     "type": "java.lang.String",
     "description": "A description for 'custom.property.interval.msecs'"
+  },
+  {
+    "name": "custom.property.crypto.name",
+    "type": "java.lang.String",
+    "description": "A description for 'custom.property.crypto.name'"
+  },
+  {
+    "name": "custom.property.crypto.curr",
+    "type": "java.lang.String",
+    "description": "A description for 'custom.property.crypto.curr'"
+  },
+  {
+    "name": "custom.property.socket.addr",
+    "type": "java.lang.String",
+    "description": "A description for 'custom.property.socket.addr'"
   }
 ]}

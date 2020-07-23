@@ -1,4 +1,4 @@
-package com.corp.concepts.reactive.rxjava.configuration;
+package com.corp.concepts.reactive.webflux.configuration;
 
 import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
@@ -46,8 +46,14 @@ public class WebClientConfig {
 	}
 
 	@Bean
-	public RouterFunction<ServerResponse> htmlRouter(@Value("classpath:/public/index.html") Resource html) {
+	public RouterFunction<ServerResponse> homePageRouter(@Value("classpath:/public/index.html") Resource html) {
 		return route(GET("/"), request -> ok().contentType(MediaType.TEXT_HTML).bodyValue(html));
+	}
+
+	@Bean
+	public RouterFunction<ServerResponse> faviconRouter(@Value("classpath:/public/favicon.ico") Resource html) {
+		return route(GET("/favicon.ico"),
+				request -> ok().contentType(new MediaType("image", "x-icon")).bodyValue(html));
 	}
 
 	@Bean

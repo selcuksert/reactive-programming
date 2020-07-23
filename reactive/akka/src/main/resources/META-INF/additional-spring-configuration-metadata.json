@@ -25,14 +25,29 @@
     "description": "A description for 'custom.property.proxy.enabled'"
   },
   {
-    "name": "custom.property.crypto.name",
+    "name": "custom.property.proxy.host",
     "type": "java.lang.String",
-    "description": "A description for 'custom.property.crypto.name'"
+    "description": "A description for 'custom.property.proxy.host'"
+  },
+  {
+    "name": "custom.property.proxy.host",
+    "type": "java.lang.String",
+    "description": "A description for 'custom.property.proxy.host'"
+  },
+  {
+    "name": "custom.property.proxy.host",
+    "type": "java.lang.String",
+    "description": "A description for 'custom.property.proxy.host'"
   },
   {
     "name": "custom.property.message.topic",
     "type": "java.lang.String",
     "description": "A description for 'custom.property.message.topic'"
+  },
+  {
+    "name": "custom.property.crypto.name",
+    "type": "java.lang.String",
+    "description": "A description for 'custom.property.crypto.name'"
   },
   {
     "name": "custom.property.crypto.curr",

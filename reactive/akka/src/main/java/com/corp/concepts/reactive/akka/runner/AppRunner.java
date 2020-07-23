@@ -1,6 +1,4 @@
-package com.corp.concepts.reactive.rxjava.runner;
-
-import java.util.concurrent.TimeUnit;
+package com.corp.concepts.reactive.akka.runner;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
@@ -8,23 +6,25 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
-import com.corp.concepts.reactive.rxjava.observer.ResponseObserver;
-import com.corp.concepts.reactive.rxjava.service.CoinPriceService;
+import com.corp.concepts.reactive.akka.actors.Poller;
+import com.corp.concepts.reactive.akka.actors.Requestor;
+import com.corp.concepts.reactive.akka.actors.Sender;
+import com.corp.concepts.reactive.akka.service.CoinPriceService;
 
-import io.reactivex.Observable;
-import io.reactivex.schedulers.Schedulers;
+import akka.actor.ActorRef;
+import akka.actor.ActorSystem;
 
 @Component
 public class AppRunner implements ApplicationRunner {
 
 	@Value("${custom.property.interval.msecs}")
 	private int intervalInMsecs;
+	@Value("${custom.property.message.topic}")
+	private String topicName;
 	@Value("${custom.property.crypto.name}")
 	private String cryptoName;
 	@Value("${custom.property.crypto.curr}")
 	private String cryptoCurr;
-	@Value("${custom.property.message.topic}")
-	private String topicName;
 
 	private CoinPriceService coinPriceService;
 	private SimpMessagingTemplate template;
@@ -36,9 +36,13 @@ public class AppRunner implements ApplicationRunner {
 
 	@Override
 	public void run(ApplicationArguments args) throws Exception {
-		Observable.interval(intervalInMsecs, TimeUnit.MILLISECONDS, Schedulers.io())
-				.map(tick -> coinPriceService.getPrice(cryptoName + "-" + cryptoCurr))
-				.subscribe(new ResponseObserver(template, topicName));
+		final ActorSystem system = ActorSystem.create("cryptoprice");
+		final ActorRef sender = system.actorOf(Sender.props(template, topicName), "sender");
+
+		final ActorRef requestor = system.actorOf(Requestor.props(sender, coinPriceService), "requestor");
+
+		system.actorOf(Poller.props(cryptoName + "-" + cryptoCurr, intervalInMsecs, requestor),
+				cryptoName + "-" + cryptoCurr + "-actor");
 	}
 
 }

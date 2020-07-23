@@ -1,7 +1,8 @@
-package com.corp.concepts.reactive.rxjava.configuration;
+package com.corp.concepts.reactive.webflux.configuration;
 
 import java.util.Properties;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
@@ -18,6 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class WebSocketConfig {
 
+	@Value("${custom.property.socket.addr}")
+	private String socketAddr;
+
 	private WebSocketHandler webSocketHandler;
 
 	public WebSocketConfig(WebSocketHandler webSocketHandler) {
@@ -28,7 +32,7 @@ public class WebSocketConfig {
 	public SimpleUrlHandlerMapping simpleUrlHandlerMapping() {
 		log.info("Init SimpleUrlHandlerMapping");
 		Properties mappings = new Properties();
-		mappings.put("/ws/event-emitter", webSocketHandler);
+		mappings.put(socketAddr, webSocketHandler);
 
 		SimpleUrlHandlerMapping handlerMapping = new SimpleUrlHandlerMapping();
 		handlerMapping.setOrder(Ordered.HIGHEST_PRECEDENCE);

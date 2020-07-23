@@ -14,6 +14,9 @@ custom.property:
     enabled: false
   coin.service.uri: https://api.coinbase.com/v2/prices/{currPair}/buy
   crypto:
-    base.list: BTC,ETH,LTC
-    curr.list: USD,EUR
-  interval.msecs: 5000
+    name: BTC
+    curr: USD
+  interval.msecs: 2000
+  message:
+    stomp.endpoint: /price-websocket
+    topic: /topic/price

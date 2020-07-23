@@ -10,14 +10,16 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ResponseObserver extends DefaultObserver<CoinBaseResponse> {
 	private SimpMessagingTemplate template;
+	private String topicName;
 
-	public ResponseObserver(SimpMessagingTemplate template) {
+	public ResponseObserver(SimpMessagingTemplate template, String topicName) {
 		this.template = template;
+		this.topicName = topicName;
 	}
 
 	@Override
 	public void onNext(CoinBaseResponse response) {
-		template.convertAndSend("/topic/price", response);
+		template.convertAndSend(topicName, response);
 	}
 
 	@Override
