@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta content="IE=Edge" http-equiv="X-UA-Compatible">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Real-Time Crypto Currency Price Trend</title>
+
+<link rel="stylesheet" type="text/css"
+	href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css"
+	integrity="sha512-8bHTC73gkZ7rZ7vpqUQThUDhqcNFyYi2xgDgPDHc+GXVGHXq+xPjynxIopALmOPqzo9JZj0k6OqqewdGO3EsrQ=="
+	crossorigin="anonymous">
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"
+	integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+	crossorigin="anonymous"></script>
+
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js"
+	integrity="sha512-dqw6X88iGgZlTsONxZK9ePmJEFrmHwpuMrsUChjAw1mRUhUITE5QU9pkcSox+ynfLhL15Sv2al5A0LVyDCmtUw=="
+	crossorigin="anonymous"></script>
+
+<script src="https://www.gstatic.com/charts/loader.js"></script>
+
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.4.0/sockjs.min.js"
+	integrity="sha512-wMmlpbPCY778BJObxSz1tBYZTaz8q6eAJGiQke+r0AtqqgYPfAmwcip5p1HAmWKA7pxcqNeY8hz1mkHgZhqIiQ=="
+	crossorigin="anonymous"></script>
+
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"
+	integrity="sha512-iKDtgDyTHjAitUDdLljGhenhPwrbBfqTKWO1mkhSFH3A7blITC9MhYon6SjnMhp4o0rADGw9yAC6EW4t5a4K3g=="
+	crossorigin="anonymous"></script>
+
+<script type="text/javascript">
+	var chartData = [];
+
+	function connect() {
+		var socket = new SockJS('/price-websocket');
+		stompClient = Stomp.over(socket);
+		stompClient.debug = () => {};
+		stompClient.connect({}, function(frame) {
+			isOnline(true);
+			stompClient.subscribe('/topic/price', function(price) {
+				update(price.body);
+			});
+		});
+	}
+
+	function isOnline(online) {
+		updateLabel();
+		let statusElem = document.getElementById('status');
+		statusElem.style.color = 'white';
+		if (online === true) {
+			statusElem.style.backgroundColor = '#21BA47';
+			statusElem.innerText = 'Online';
+		} else {
+			statusElem.style.backgroundColor = '#db2828';
+			statusElem.innerText = 'Offline';
+		}
+	}
+
+	function disconnect() {
+		if (stompClient !== null) {
+			stompClient.disconnect();
+		}
+		isOnline(false);
+		chartData = [];
+		drawPriceChart();
+	}
+
+	function timeString(dateObj) {
+		let hours = dateObj.getHours();
+		let minutes = dateObj.getMinutes();
+		let seconds = dateObj.getSeconds();
+
+		let timeStr = hours.toString().padStart(2, '0') + ':'
+				+ minutes.toString().padStart(2, '0') + ':'
+				+ seconds.toString().padStart(2, '0');
+
+		return timeStr;
+	}
+
+	function updateLabel() {
+		let labelElem = document.getElementById('subheader');
+		$.get( "/info/currpair", function( data ) {
+			labelElem.innerText = data;
+		});				
+	}
+	
+	function update(message) {
+		let priceData = JSON.parse(message);
+		let dateObj = new Date(priceData.timestamp);
+		chartData.push([ timeString(dateObj),
+				Number.parseFloat(priceData.data.amount) ]);
+		drawPriceChart();
+	}
+
+	google.charts.load('current', {
+		packages : [ 'corechart', 'line' ]
+	});
+	google.charts.setOnLoadCallback(drawPriceChart);
+
+	function drawPriceChart() {
+
+		var data = new google.visualization.DataTable();
+		data.addColumn('string', 'Time');
+		data.addColumn('number', 'Price');
+
+		data.addRows(chartData);
+
+		var options = {
+			hAxis : {
+				title : 'Time',
+				textPosition : 'out'
+			},
+			vAxis : {
+				format : '$#',
+				textPosition : 'out'
+			},
+			pointSize : 2,
+			dataOpacity : 0.6,
+			colors : [ '#15A0C8' ],
+		};
+
+		var chart = new google.visualization.AreaChart(document
+				.getElementById('chart_div'));
+
+		chart.draw(data, options);
+	}
+
+	$(window).resize(function() {
+		drawPriceChart();
+	});
+
+	$(document).ready(function() {
+		isOnline(false);
+	});
+</script>
+</head>
+<body>
+	<div class="ui three item attached stackable menu">
+		<a class="item" id="connect" onclick="connect();"> <i
+			class="play icon"></i> Connect
+		</a> <span class="item" id="status"></span> <a class="item"
+			id="disconnect" onclick="disconnect();"> <i class="stop icon"></i>
+			Disconnect
+		</a>
+	</div>
+
+	<div class="ui container segments">
+		<div class="ui inverted teal segment">
+			<h2 class="ui huge header">
+				Price Trend
+				<div class="sub header" id="subheader"></div>
+			</h2>
+		</div>
+		<div class="ui segment">
+			<div id="chart_div" style="width: 100%; height: 400px;"></div>
+		</div>
+	</div>
+
+</body>
+</html>

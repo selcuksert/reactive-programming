@@ -20,12 +20,14 @@
 		<java.version>14</java.version>
 		<akka.version>2.6.8</akka.version>
 		<scala.binary.version>2.13</scala.binary.version>
+		<vertx.version>3.9.2</vertx.version>
 	</properties>
 
 	<modules>
 		<module>webflux</module>
 		<module>models</module>
 		<module>rxjava</module>
+		<module>vertx</module>
 	</modules>
 
 	<dependencies>

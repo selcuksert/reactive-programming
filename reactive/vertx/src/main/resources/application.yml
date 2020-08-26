@@ -1,0 +1,12 @@
+spring:
+  main:
+    web-application-type: NONE
+
+custom:
+  property:
+    web:
+      server:
+        port: 8090
+    coin.price:
+      host: api.coinbase.com
+      uri: /v2/prices/
