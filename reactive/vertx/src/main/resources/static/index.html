@@ -5,7 +5,7 @@
 <meta content="IE=Edge" http-equiv="X-UA-Compatible">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Real-Time Crypto Currency Price Trend</title>
+<title>Real-Time BTC Price Trend</title>
 
 <link rel="stylesheet" type="text/css"
 	href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css"
@@ -21,31 +21,31 @@
 	integrity="sha512-dqw6X88iGgZlTsONxZK9ePmJEFrmHwpuMrsUChjAw1mRUhUITE5QU9pkcSox+ynfLhL15Sv2al5A0LVyDCmtUw=="
 	crossorigin="anonymous"></script>
 
-<script src="https://www.gstatic.com/charts/loader.js"></script>
-
-<script
-	src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.4.0/sockjs.min.js"
-	integrity="sha512-wMmlpbPCY778BJObxSz1tBYZTaz8q6eAJGiQke+r0AtqqgYPfAmwcip5p1HAmWKA7pxcqNeY8hz1mkHgZhqIiQ=="
-	crossorigin="anonymous"></script>
-
-<script
-	src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"
-	integrity="sha512-iKDtgDyTHjAitUDdLljGhenhPwrbBfqTKWO1mkhSFH3A7blITC9MhYon6SjnMhp4o0rADGw9yAC6EW4t5a4K3g=="
-	crossorigin="anonymous"></script>
+<script type="text/javascript"
+	src="https://www.gstatic.com/charts/loader.js"></script>
 
 <script type="text/javascript">
+	var ws = null;
+	var url = 'ws://' + window.location.hostname + ':' + window.location.port
+			+ '/ws/price';
+
 	var chartData = [];
 
 	function connect() {
-		var socket = new SockJS('/price-websocket');
-		stompClient = Stomp.over(socket);
-		stompClient.debug = () => {};
-		stompClient.connect({}, function(frame) {
+		ws = new WebSocket(url);
+		ws.onopen = function() {
 			isOnline(true);
-			stompClient.subscribe('/topic/price', function(price) {
-				update(price.body);
-			});
-		});
+			ws.send('Start');
+		};
+
+		ws.onmessage = function(event) {
+			console.log(event);
+			update(event.data);
+		};
+
+		ws.onclose = function(event) {
+			chartData = [];
+		};
 	}
 
 	function isOnline(online) {
@@ -62,12 +62,11 @@
 	}
 
 	function disconnect() {
-		if (stompClient !== null) {
-			stompClient.disconnect();
+		if (ws != null) {
+			isOnline(false);
+			ws.close();
+			ws = null;
 		}
-		isOnline(false);
-		chartData = [];
-		drawPriceChart();
 	}
 
 	function timeString(dateObj) {
@@ -88,7 +87,7 @@
 			labelElem.innerText = data;
 		});				
 	}
-	
+
 	function update(message) {
 		let priceData = JSON.parse(message);
 		let dateObj = new Date(priceData.timestamp);
@@ -142,10 +141,10 @@
 <body>
 	<div class="ui three item attached stackable menu">
 		<a class="item" id="connect" onclick="connect();"> <i
-			class="play icon"></i> Connect
+			class="play icon"></i> Start
 		</a> <span class="item" id="status"></span> <a class="item"
 			id="disconnect" onclick="disconnect();"> <i class="stop icon"></i>
-			Disconnect
+			Stop
 		</a>
 	</div>
 

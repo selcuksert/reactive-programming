@@ -1,25 +1,28 @@
 package com.corp.concepts.reactive.vertx.verticle;
 
+import java.util.Calendar;
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
-import io.vertx.circuitbreaker.CircuitBreakerOptions;
+import io.reactivex.Single;
+import io.reactivex.functions.BooleanSupplier;
 import io.vertx.core.json.JsonObject;
-import io.vertx.rxjava.circuitbreaker.CircuitBreaker;
-import io.vertx.rxjava.core.AbstractVerticle;
-import io.vertx.rxjava.core.RxHelper;
-import io.vertx.rxjava.ext.web.Router;
-import io.vertx.rxjava.ext.web.RoutingContext;
-import io.vertx.rxjava.ext.web.client.HttpRequest;
-import io.vertx.rxjava.ext.web.client.HttpResponse;
-import io.vertx.rxjava.ext.web.client.WebClient;
-import io.vertx.rxjava.ext.web.codec.BodyCodec;
-import io.vertx.rxjava.ext.web.handler.FaviconHandler;
-import io.vertx.rxjava.ext.web.handler.StaticHandler;
+import io.vertx.reactivex.core.AbstractVerticle;
+import io.vertx.reactivex.core.RxHelper;
+import io.vertx.reactivex.core.http.ServerWebSocket;
+import io.vertx.reactivex.ext.web.Router;
+import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.client.HttpRequest;
+import io.vertx.reactivex.ext.web.client.HttpResponse;
+import io.vertx.reactivex.ext.web.client.WebClient;
+import io.vertx.reactivex.ext.web.codec.BodyCodec;
+import io.vertx.reactivex.ext.web.handler.FaviconHandler;
+import io.vertx.reactivex.ext.web.handler.StaticHandler;
 import lombok.extern.slf4j.Slf4j;
-import rx.Single;
 
 @Component
 @Slf4j
@@ -27,16 +30,20 @@ public class CoinPriceVerticle extends AbstractVerticle {
 
 	@Value("${custom.property.web.server.port}")
 	private int serverPort;
-
 	@Value("${custom.property.coin.price.host}")
 	private String coinPriceServiceHost;
-
 	@Value("${custom.property.coin.price.uri}")
 	private String coinPriceServiceUri;
+	@Value("${custom.property.socket.addr}")
+	private String socketAddr;
+	@Value("${custom.property.crypto.name}")
+	private String cryptoName;
+	@Value("${custom.property.crypto.curr}")
+	private String cryptoCurr;
+	@Value("${custom.property.interval.msecs}")
+	private int intervalInMsecs;
 
 	private WebClient webClient;
-
-	private CircuitBreaker circuit;
 
 	@Override
 	public void start() throws Exception {
@@ -46,52 +53,50 @@ public class CoinPriceVerticle extends AbstractVerticle {
 
 		router.route().handler(StaticHandler.create("static")).handler(FaviconHandler.create("static/favicon.ico"));
 
-		router.get("/price/:base/:curr").handler(this::getCoinPrice);
+		router.get("/info/currpair").handler(this::getCurrPair);
 
-		vertx.createHttpServer().requestHandler(router).listen(serverPort);
+		vertx.createHttpServer().requestHandler(router).webSocketHandler(handler -> {
+			if (!handler.path().equals(socketAddr)) {
+				handler.reject();
+			}
 
-		this.circuit = CircuitBreaker.create("coin-circuit", vertx,
-				new CircuitBreakerOptions().setFallbackOnFailure(true) // Call the fallback on failures
-						.setTimeout(3000) // Set the operation timeout
-						.setMaxFailures(3) // Number of failures before switching to the 'open' state
-						.setResetTimeout(5000) // Time before attempting to reset the circuit breaker
-		);
+			handler.closeHandler(closeHandler -> log.info("WebSocket closed"));
+
+			coinPriceWsHandler(handler);
+		}).listen(serverPort);
 
 	}
 
-	private void getCoinPrice(RoutingContext rc) {
-		circuit.rxExecuteWithFallback(future -> {
-			HttpRequest<JsonObject> requestPrice = webClient
-					.get(443, coinPriceServiceHost,
-							coinPriceServiceUri + rc.pathParam("base") + "-" + rc.pathParam("curr") + "/buy")
-					.ssl(true)
-					.putHeader(HttpHeaderNames.ACCEPT.toString(), HttpHeaderValues.APPLICATION_JSON.toString())
-					.as(BodyCodec.jsonObject());
+	private void getCurrPair(RoutingContext rc) {
+		rc.response().end(cryptoName + "-" + cryptoCurr + " (frequency: " + intervalInMsecs + " msecs)");
+	}
 
-			HttpRequest<JsonObject> requestTime = webClient.get(443, coinPriceServiceHost, "/v2/time").ssl(true)
-					.putHeader(HttpHeaderNames.ACCEPT.toString(), HttpHeaderValues.APPLICATION_JSON.toString())
-					.as(BodyCodec.jsonObject());
+	private void coinPriceWsHandler(ServerWebSocket ws) {
+		log.info("WebSocket opened");
+		HttpRequest<JsonObject> requestPrice = webClient
+				.get(443, coinPriceServiceHost, coinPriceServiceUri + cryptoName + "-" + cryptoCurr + "/buy").ssl(true)
+				.putHeader(HttpHeaderNames.ACCEPT.toString(), HttpHeaderValues.APPLICATION_JSON.toString())
+				.as(BodyCodec.jsonObject());
 
-			Single<JsonObject> priceResp = requestPrice.rxSend()
-					.subscribeOn(RxHelper.scheduler(vertx)) // use Vert.x event loop
-					.map(HttpResponse::body);
-			Single<JsonObject> timeResp = requestTime.rxSend()
-					.subscribeOn(RxHelper.scheduler(vertx)) // use Vert.x event loop
-					.map(HttpResponse::body);
+		Single<JsonObject> priceResp = requestPrice.rxSend().subscribeOn(RxHelper.scheduler(vertx))
+				.map(HttpResponse::body);
 
-			// Merge price and time API responses
-			Single.zip(priceResp, timeResp, (price, time) -> {
-				return new JsonObject().put("data", price.getJsonObject("data")).put("timestamp",
-						time.getJsonObject("data").getLong("epoch"));
-			}).subscribe(future::complete, future::fail);
-		}, fallback -> new JsonObject().put("error", "[" + circuit.state().name() + "] " + fallback.getMessage()))
-				.subscribe(result -> {
-					rc.response().putHeader(HttpHeaderNames.CONTENT_TYPE.toString(),
-							HttpHeaderValues.APPLICATION_JSON.toString()).end(result.encode());
-				}, error -> {
-					log.error("Error: ", error.getCause());
-					rc.response().putHeader(HttpHeaderNames.CONTENT_TYPE.toString(),
-							HttpHeaderValues.APPLICATION_JSON.toString()).end(error.getMessage());
-				});
+		priceResp.toObservable().subscribeOn(RxHelper.scheduler(vertx)).map(price -> {
+			return new JsonObject().put("data", price.getJsonObject("data")).put("timestamp",
+					Calendar.getInstance().getTimeInMillis());
+		})
+		.delay(intervalInMsecs, TimeUnit.MILLISECONDS)
+		.repeatUntil(new BooleanSupplier() {
+			@Override
+			public boolean getAsBoolean() throws Exception {
+				return ws.isClosed();
+			}
+		}).subscribe(result -> {
+			if (!ws.isClosed()) {
+				ws.writeTextMessage(result.encode());
+			}
+		}, error -> {
+			log.error("Error: ", error.getMessage());
+		});
 	}
 }

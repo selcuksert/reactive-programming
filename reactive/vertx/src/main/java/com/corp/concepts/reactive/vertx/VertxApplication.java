@@ -8,7 +8,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import com.corp.concepts.reactive.vertx.verticle.CoinPriceVerticle;
 
-import io.vertx.rxjava.core.Vertx;
+import io.vertx.reactivex.core.Vertx;
 
 
 @SpringBootApplication

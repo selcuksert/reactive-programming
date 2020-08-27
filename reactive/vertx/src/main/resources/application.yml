@@ -10,3 +10,9 @@ custom:
     coin.price:
       host: api.coinbase.com
       uri: /v2/prices/
+    crypto:
+      name: BTC
+      curr: USD
+    interval.msecs: 2000
+    socket:
+      addr: /ws/price

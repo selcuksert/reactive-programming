@@ -1,23 +1,9 @@
 {"properties": [
-  {
-    "name": "custom.web.server.port",
-    "type": "java.lang.String",
-    "description": "A description for 'custom.web.server.port'"
-  },
+  
   {
     "name": "custom.property.web.server.port",
     "type": "java.lang.String",
     "description": "A description for 'custom.property.web.server.port'"
-  },
-  {
-    "name": "custom.coin.service.uri",
-    "type": "java.lang.String",
-    "description": "A description for 'custom.coin.service.uri'"
-  },
-  {
-    "name": "custom.coin.price.uri",
-    "type": "java.lang.String",
-    "description": "A description for 'custom.coin.price.uri'"
   },
   {
     "name": "custom.property.coin.price.uri",
@@ -28,5 +14,25 @@
     "name": "custom.property.coin.price.host",
     "type": "java.lang.String",
     "description": "A description for 'custom.property.coin.price.host'"
+  },
+  {
+    "name": "custom.property.crypto.name",
+    "type": "java.lang.String",
+    "description": "A description for 'custom.property.crypto.name'"
+  },
+  {
+    "name": "custom.property.interval.msecs",
+    "type": "java.lang.String",
+    "description": "A description for 'custom.property.interval.msecs'"
+  },
+  {
+    "name": "custom.property.crypto.curr",
+    "type": "java.lang.String",
+    "description": "A description for 'custom.property.crypto.curr'"
+  },
+  {
+    "name": "custom.property.socket.addr",
+    "type": "java.lang.String",
+    "description": "A description for 'custom.property.socket.addr'"
   }
 ]}
