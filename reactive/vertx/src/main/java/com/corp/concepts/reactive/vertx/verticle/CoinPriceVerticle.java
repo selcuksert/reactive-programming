@@ -9,6 +9,7 @@ import io.vertx.circuitbreaker.CircuitBreakerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava.circuitbreaker.CircuitBreaker;
 import io.vertx.rxjava.core.AbstractVerticle;
+import io.vertx.rxjava.core.RxHelper;
 import io.vertx.rxjava.ext.web.Router;
 import io.vertx.rxjava.ext.web.RoutingContext;
 import io.vertx.rxjava.ext.web.client.HttpRequest;
@@ -34,7 +35,7 @@ public class CoinPriceVerticle extends AbstractVerticle {
 	private String coinPriceServiceUri;
 
 	private WebClient webClient;
-	
+
 	private CircuitBreaker circuit;
 
 	@Override
@@ -48,7 +49,7 @@ public class CoinPriceVerticle extends AbstractVerticle {
 		router.get("/price/:base/:curr").handler(this::getCoinPrice);
 
 		vertx.createHttpServer().requestHandler(router).listen(serverPort);
-		
+
 		this.circuit = CircuitBreaker.create("coin-circuit", vertx,
 				new CircuitBreakerOptions().setFallbackOnFailure(true) // Call the fallback on failures
 						.setTimeout(3000) // Set the operation timeout
@@ -71,26 +72,26 @@ public class CoinPriceVerticle extends AbstractVerticle {
 					.putHeader(HttpHeaderNames.ACCEPT.toString(), HttpHeaderValues.APPLICATION_JSON.toString())
 					.as(BodyCodec.jsonObject());
 
-			Single<JsonObject> priceResp = requestPrice.rxSend().map(HttpResponse::body);
-			Single<JsonObject> timeResp = requestTime.rxSend().map(HttpResponse::body);
+			Single<JsonObject> priceResp = requestPrice.rxSend()
+					.subscribeOn(RxHelper.scheduler(vertx)) // use Vert.x event loop
+					.map(HttpResponse::body);
+			Single<JsonObject> timeResp = requestTime.rxSend()
+					.subscribeOn(RxHelper.scheduler(vertx)) // use Vert.x event loop
+					.map(HttpResponse::body);
 
 			// Merge price and time API responses
 			Single.zip(priceResp, timeResp, (price, time) -> {
-				return new JsonObject().put("data", price.getJsonObject("data")).put("time",
-						time.getJsonObject("data"));
+				return new JsonObject().put("data", price.getJsonObject("data")).put("timestamp",
+						time.getJsonObject("data").getLong("epoch"));
 			}).subscribe(future::complete, future::fail);
-		}, fallback -> new JsonObject().put("error", "["+ circuit.state().name()+"] " + fallback.getMessage()))
-		.subscribe(
-		result -> {
-			rc.response()
-					.putHeader(HttpHeaderNames.CONTENT_TYPE.toString(), HttpHeaderValues.APPLICATION_JSON.toString())
-					.end(result.encode());
-		}, 
-		error -> {
-			log.error("Error: ", error.getCause());
-			rc.response()
-					.putHeader(HttpHeaderNames.CONTENT_TYPE.toString(), HttpHeaderValues.APPLICATION_JSON.toString())
-					.end(error.getMessage());
-		});
+		}, fallback -> new JsonObject().put("error", "[" + circuit.state().name() + "] " + fallback.getMessage()))
+				.subscribe(result -> {
+					rc.response().putHeader(HttpHeaderNames.CONTENT_TYPE.toString(),
+							HttpHeaderValues.APPLICATION_JSON.toString()).end(result.encode());
+				}, error -> {
+					log.error("Error: ", error.getCause());
+					rc.response().putHeader(HttpHeaderNames.CONTENT_TYPE.toString(),
+							HttpHeaderValues.APPLICATION_JSON.toString()).end(error.getMessage());
+				});
 	}
 }
